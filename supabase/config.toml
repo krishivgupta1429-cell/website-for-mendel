@@ -1,10 +1,1 @@
-project_id = "tiewnnskjyvnyqfbszev"
-
-[functions.send-verification-email]
-verify_jwt = false
-
-[functions.verify-email-token]
-verify_jwt = false
-
-[functions.send-test-email]
-verify_jwt = false
+project_id = "arvbukwjzrrjutmopjhe"
