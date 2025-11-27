@@ -115,9 +115,7 @@ const Index = () => {
           </div>
 
           {/* Title with Golden Gradient */}
-          <h1 className={`text-4xl md:text-6xl font-bold mb-4 text-gold-gradient bg-[length:200%_auto] drop-shadow-[0_0_20px_rgba(255,215,0,0.5)] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
-            Menorah in The Square
-          </h1>
+          <h1 className={`text-4xl md:text-6xl font-bold mb-4 text-gold-gradient bg-[length:200%_auto] drop-shadow-[0_0_20px_rgba(255,215,0,0.5)] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>Chanukah Celebration</h1>
 
           {/* Date, Time and Location */}
           <div className="flex flex-col items-center my-4 md:my-6">
