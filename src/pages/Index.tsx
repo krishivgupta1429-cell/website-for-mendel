@@ -114,10 +114,15 @@ const Index = () => {
             Menorah in The Square
           </h1>
 
-          {/* Date and Time */}
-          <p className={`text-2xl md:text-3xl text-gold-gradient font-medium tracking-wide bg-[length:200%_auto] my-4 md:my-6 ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
-            Dec 21 • 5:00 pm
-          </p>
+          {/* Date, Time and Location */}
+          <div className="flex flex-col items-center my-4 md:my-6">
+            <p className={`text-2xl md:text-3xl text-gold-gradient font-medium tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
+              December 14 • 4:00 PM
+            </p>
+            <p className={`text-lg md:text-xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] mt-1 opacity-90 ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
+              At Wheeling Town Centre
+            </p>
+          </div>
 
           {/* Subtitle */}
           <p className={`text-xl md:text-2xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
@@ -152,9 +157,24 @@ const Index = () => {
         {/* Footer */}
         <div className="mt-16 text-center animate-fade-in space-y-6 py-6 content-offscreen">
           {/* Location */}
-          <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
-            The event will take place at 203 S Union St, Traverse City, MI 49684
-          </p>
+          <div className="space-y-4">
+            <div>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+                The Menorah Lighting will take place at:
+              </p>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+                371 Town Center Dr., Wheeling, IL 60090
+              </p>
+            </div>
+            <div>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+                The Indoor Celebration will take place at:
+              </p>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+                100 Community Blvd., Rooms 204–205, Wheeling, IL 60090
+              </p>
+            </div>
+          </div>
           
           {/* Powered by Techrupt */}
           <div className="mb-4">
