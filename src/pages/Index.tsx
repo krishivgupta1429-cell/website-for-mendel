@@ -123,14 +123,11 @@ const Index = () => {
               December 14 • 4:00 PM
             </p>
             <p className={`text-lg md:text-xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] mt-1 opacity-90 ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
-              At Wheeling Town Centre
-            </p>
+          </p>
           </div>
 
           {/* Subtitle */}
-          <p className={`text-xl md:text-2xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
-            Together We Light the Square.
-          </p>
+          <p className={`text-xl md:text-2xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>Public Menorah Lighting At Wheeling Town Center.</p>
         </div>
 
         {/* Form Card with Glassmorphism */}
