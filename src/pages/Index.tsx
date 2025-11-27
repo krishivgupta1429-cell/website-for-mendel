@@ -160,7 +160,7 @@ const Index = () => {
           <div className="space-y-4">
             <div>
               <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">The Menorah Lighting will take place at:</p>
-              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">375 w Dundee Rd, Wheeling, IL 60090</p>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">375 W Dundee Rd, Wheeling, IL 60090</p>
             </div>
             <div>
               <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
@@ -204,11 +204,7 @@ const Index = () => {
 
           {/* Chanukah Logo */}
           <div className="mt-8 flex justify-center">
-            <img 
-              src="/chanukah-logo-mendel.jpeg" 
-              alt="Chanukah Logo" 
-              className="w-32 h-auto md:w-40 rounded-lg opacity-90"
-            />
+            <img src="/chanukah-logo-mendel.jpeg" alt="Chanukah Logo" className="w-32 h-auto md:w-40 rounded-lg opacity-90" />
           </div>
         </div>
       </div>
