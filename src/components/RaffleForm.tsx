@@ -488,15 +488,81 @@ const RaffleForm = () => {
         </div>
 
         {/* Indoor Chanukah Celebration Section */}
-        <div className="space-y-4">
-          <h3 className="text-foreground font-semibold text-lg">
+        <div className="space-y-5">
+          {/* Heading - Centered above the 3-column block */}
+          <h3 className="text-foreground font-semibold text-lg text-center md:text-center mb-2">
             Indoor Chanukah Celebration
           </h3>
-          <p className="text-foreground/90 text-sm leading-relaxed">
-            After the lighting, join us at the Wheeling Park District for a juggling & comedy show, caricature drawings, hot latkes, fresh donuts, and chocolate gelt — fun for the whole family.
-          </p>
           
-          <div className="space-y-2">
+          {/* Mobile: Heading → Text → Images stacked | Desktop: 3-column layout */}
+          
+          {/* Mobile layout: Text first, then images */}
+          <div className="md:hidden space-y-4">
+            {/* Description text */}
+            <p className="text-foreground/90 text-sm leading-relaxed text-center px-2">
+              After the lighting, join us at the Wheeling Park District for a juggling & comedy show, caricature drawings, hot latkes, fresh donuts, and chocolate gelt — fun for the whole family.
+            </p>
+            
+            {/* Andy Head */}
+            <div className="flex flex-col items-center">
+              <img 
+                src="/Andy-Head.jpg" 
+                alt="Andy Head - Juggling & Comedy Show" 
+                className="w-24 h-24 object-cover rounded-xl border border-gold/30"
+              />
+              <p className="text-center text-xs mt-2 leading-tight" style={{ color: '#FFCC66' }}>
+                Juggling & comedy show with Andy Head
+              </p>
+            </div>
+            
+            {/* Marlene Goodman */}
+            <div className="flex flex-col items-center">
+              <img 
+                src="/Marlene-goodman.jpg" 
+                alt="Marlene Goodman - Caricature Drawing" 
+                className="w-24 h-24 object-cover rounded-xl border border-gold/30"
+              />
+              <p className="text-center text-xs mt-2 leading-tight" style={{ color: '#FFCC66' }}>
+                Caricature drawing by Marlene Goodman
+              </p>
+            </div>
+          </div>
+          
+          {/* Desktop layout: 3-column grid */}
+          <div className="hidden md:grid md:grid-cols-[1fr_2fr_1fr] md:gap-6 md:items-start">
+            {/* Column 1: Andy Head - Left side */}
+            <div className="flex flex-col items-center">
+              <img 
+                src="/Andy-Head.jpg" 
+                alt="Andy Head - Juggling & Comedy Show" 
+                className="w-28 h-28 object-cover rounded-xl border border-gold/30"
+              />
+              <p className="text-center text-xs mt-2 leading-tight" style={{ color: '#FFCC66' }}>
+                Juggling & comedy show with Andy Head
+              </p>
+            </div>
+            
+            {/* Column 2: Description text - Center */}
+            <div className="flex items-start justify-center h-full pt-1">
+              <p className="text-foreground/90 text-sm leading-relaxed text-left max-w-[480px]">
+                After the lighting, join us at the Wheeling Park District for a juggling & comedy show, caricature drawings, hot latkes, fresh donuts, and chocolate gelt — fun for the whole family.
+              </p>
+            </div>
+            
+            {/* Column 3: Marlene Goodman - Right side */}
+            <div className="flex flex-col items-center">
+              <img 
+                src="/Marlene-goodman.jpg" 
+                alt="Marlene Goodman - Caricature Drawing" 
+                className="w-28 h-28 object-cover rounded-xl border border-gold/30"
+              />
+              <p className="text-center text-xs mt-2 leading-tight" style={{ color: '#FFCC66' }}>
+                Caricature drawing by Marlene Goodman
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-2 pt-2">
             <Label className="text-foreground font-medium text-base">
               Please select one option: <span className="text-gold">*</span>
             </Label>
