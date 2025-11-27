@@ -90,6 +90,11 @@ const Index = () => {
 
       {/* Content */}
       <div className="relative z-10 container max-w-2xl mx-auto px-4 py-12 md:py-16">
+        {/* B"H - Top Left Corner */}
+        <div className="absolute top-4 left-4 md:top-6 md:left-6">
+          <span className="text-white/90 text-sm md:text-base font-light tracking-wide">B"H</span>
+        </div>
+
         {/* Hosted by banner */}
         <div className="text-center mb-6 animate-fade-in">
           <div className="inline-flex items-center gap-3 px-8 py-2 rounded-full bg-gradient-to-r from-gold/10 via-amber/10 to-gold/10 border border-gold/30 backdrop-blur-sm">

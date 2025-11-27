@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { submitEntry } from "@/lib/submitEntry";
@@ -16,6 +17,7 @@ const RaffleForm = () => {
     phoneNumber: "",
     numberOfAdults: "",
     numberOfChildren: "",
+    indoorCelebration: "",
     sponsorships: [] as string[]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -275,6 +277,12 @@ const RaffleForm = () => {
       return;
     }
 
+    // Validate indoor celebration selection
+    if (!formData.indoorCelebration) {
+      toast.error("Please select if you will attend the indoor celebration");
+      return;
+    }
+
     // Set submitting state
     setIsSubmitting(true);
     try {
@@ -290,6 +298,7 @@ const RaffleForm = () => {
           phoneNumber: formData.phoneNumber,
           numberOfAdults: formData.numberOfAdults,
           numberOfChildren: formData.numberOfChildren,
+          indoorCelebration: formData.indoorCelebration,
           sponsorships: formData.sponsorships
         });
         if (!response.success || !response.entryId) {
@@ -333,6 +342,7 @@ const RaffleForm = () => {
           phoneNumber: formData.phoneNumber,
           numberOfAdults: formData.numberOfAdults,
           numberOfChildren: formData.numberOfChildren,
+          indoorCelebration: formData.indoorCelebration,
           sponsorships: formData.sponsorships
         });
         if (response.success) {
@@ -348,6 +358,7 @@ const RaffleForm = () => {
             phoneNumber: "",
             numberOfAdults: "",
             numberOfChildren: "",
+            indoorCelebration: "",
             sponsorships: []
           });
           setEmailError("");
@@ -466,6 +477,61 @@ const RaffleForm = () => {
                   </SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="flex items-center justify-center py-4">
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+          <div className="mx-4 text-2xl animate-candle-flicker">✨</div>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+        </div>
+
+        {/* Indoor Chanukah Celebration Section */}
+        <div className="space-y-4">
+          <h3 className="text-foreground font-semibold text-lg">
+            Indoor Chanukah Celebration
+          </h3>
+          <p className="text-foreground/90 text-sm leading-relaxed">
+            After the lighting, join us at the Wheeling Park District for a juggling & comedy show, caricature drawings, hot latkes, fresh donuts, and chocolate gelt — fun for the whole family.
+          </p>
+          
+          <div className="space-y-2">
+            <Label className="text-foreground font-medium text-base">
+              Please select one option: <span className="text-gold">*</span>
+            </Label>
+            <RadioGroup
+              value={formData.indoorCelebration}
+              onValueChange={(value) => setFormData({ ...formData, indoorCelebration: value })}
+              className="space-y-3"
+            >
+              <div className="flex items-center space-x-3 group">
+                <RadioGroupItem 
+                  value="attending" 
+                  id="indoor-attending"
+                  className="border-gold/60 text-gold data-[state=checked]:border-gold data-[state=checked]:bg-gold focus-visible:ring-2 focus-visible:ring-gold/40"
+                />
+                <Label 
+                  htmlFor="indoor-attending" 
+                  className="font-normal cursor-pointer text-foreground/90 group-hover:text-gold transition-colors duration-200"
+                >
+                  We will attend the indoor celebration.
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3 group">
+                <RadioGroupItem 
+                  value="not-attending" 
+                  id="indoor-not-attending"
+                  className="border-gold/60 text-gold data-[state=checked]:border-gold data-[state=checked]:bg-gold focus-visible:ring-2 focus-visible:ring-gold/40"
+                />
+                <Label 
+                  htmlFor="indoor-not-attending" 
+                  className="font-normal cursor-pointer text-foreground/90 group-hover:text-gold transition-colors duration-200"
+                >
+                  Sorry, we can't make it.
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
         </div>
 

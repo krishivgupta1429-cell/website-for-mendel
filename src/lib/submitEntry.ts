@@ -8,6 +8,7 @@ export interface MenorahEntryData {
   phoneNumber: string;
   numberOfAdults: string;
   numberOfChildren: string;
+  indoorCelebration: string;
   sponsorships: string[];
   enjoyReason?: string;
   otherEnjoyReason?: string;
@@ -96,6 +97,7 @@ export async function submitEntry(
       full_phone: fullPhone,
       number_of_adults: parseInt(formData.numberOfAdults, 10),
       number_of_children: formData.numberOfChildren ? parseInt(formData.numberOfChildren, 10) : 0,
+      indoor_celebration: formData.indoorCelebration || null,
       reason: formData.enjoyReason || null,
       reason_other: formData.otherEnjoyReason?.trim() || null,
       sponsorships: formData.sponsorships,
