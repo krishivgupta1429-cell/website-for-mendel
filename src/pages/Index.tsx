@@ -201,6 +201,15 @@ const Index = () => {
               Click here
             </a>.
           </p>
+
+          {/* Chanukah Logo */}
+          <div className="mt-8 flex justify-center">
+            <img 
+              src="/chanukah-logo-mendel.jpeg" 
+              alt="Chanukah Logo" 
+              className="w-32 h-auto md:w-40 rounded-lg opacity-90"
+            />
+          </div>
         </div>
       </div>
     </div>;
