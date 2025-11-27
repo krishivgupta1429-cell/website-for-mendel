@@ -14,12 +14,8 @@ interface SubmitEntryBody {
   full_phone?: string | null;
   number_of_adults: number;
   number_of_children?: number;
-  reason: string;
-  reason_other?: string | null;
+  indoor_celebration?: string | null;
   sponsorships: string[];
-  cans_quantity: number;
-  comments?: string | null;
-  email_updates_opt_in?: boolean;
   wants_to_donate?: boolean;
   verification_token: string;
   verification_sent_at: string;
@@ -101,7 +97,7 @@ serve(async (req) => {
     const body = (await req.json()) as Partial<SubmitEntryBody>;
 
     // Minimal validation of required fields
-    if (!body.full_name || !body.email || !body.reason || !body.verification_token || !body.verification_sent_at || body.number_of_adults === undefined) {
+    if (!body.full_name || !body.email || !body.verification_token || !body.verification_sent_at || body.number_of_adults === undefined) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -123,12 +119,8 @@ serve(async (req) => {
       full_phone,
       number_of_adults: body.number_of_adults,
       number_of_children: body.number_of_children ?? 0,
-      reason: body.reason,
-      reason_other: body.reason_other?.trim() ?? null,
+      indoor_celebration: body.indoor_celebration ?? null,
       sponsorships: body.sponsorships ?? [],
-      cans_quantity: body.cans_quantity ?? 0,
-      comments: body.comments?.trim() ?? null,
-      email_updates_opt_in: body.email_updates_opt_in ?? false,
       wants_to_donate: body.wants_to_donate ?? false,
       verification_token: body.verification_token,
       verification_sent_at: body.verification_sent_at,

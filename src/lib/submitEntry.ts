@@ -10,11 +10,6 @@ export interface MenorahEntryData {
   numberOfChildren: string;
   indoorCelebration: string;
   sponsorships: string[];
-  enjoyReason?: string;
-  otherEnjoyReason?: string;
-  cansQuantity?: string;
-  comments?: string;
-  emailUpdatesOptIn?: boolean;
 }
 
 export interface MenorahEntryResponse {
@@ -98,12 +93,7 @@ export async function submitEntry(
       number_of_adults: parseInt(formData.numberOfAdults, 10),
       number_of_children: formData.numberOfChildren ? parseInt(formData.numberOfChildren, 10) : 0,
       indoor_celebration: formData.indoorCelebration || null,
-      reason: formData.enjoyReason || null,
-      reason_other: formData.otherEnjoyReason?.trim() || null,
       sponsorships: formData.sponsorships,
-      cans_quantity: 0,
-      comments: formData.comments?.trim() || null,
-      email_updates_opt_in: formData.emailUpdatesOptIn || false,
       wants_to_donate: wantsToDonate,
       verification_token: verificationToken,
       verification_sent_at: new Date().toISOString(),
