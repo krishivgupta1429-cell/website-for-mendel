@@ -545,7 +545,7 @@ const RaffleForm = () => {
         {/* Support */}
         <div className="space-y-4">
           {/* Intro line */}
-          <p className="text-foreground font-medium text-base text-left">This free community event is made possible by generous donors like you. Please consider supporting and being part of this beautiful celebration.</p>
+          <p className="text-foreground font-medium text-base text-left">This free community event is made possible by community friends who believe in sharing joy and light. Please consider taking part.</p>
           
           {/* Sponsorship Section */}
           <div id="sponsorship-section" className="space-y-4 mt-4 pt-4 border-t border-gold/20 content-offscreen" role="region" aria-labelledby="sponsorship-label">
