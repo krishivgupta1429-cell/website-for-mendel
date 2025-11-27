@@ -119,9 +119,7 @@ const Index = () => {
 
           {/* Date, Time and Location */}
           <div className="flex flex-col items-center my-4 md:my-6">
-            <p className={`text-2xl md:text-3xl text-gold-gradient font-medium tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
-              December 14 • 4:00 PM
-            </p>
+            <p className={`text-2xl md:text-3xl text-gold-gradient font-medium tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>Sunday, December 14 • 4:00 PM</p>
             <p className={`text-lg md:text-xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] mt-1 opacity-90 ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>
           </p>
           </div>
