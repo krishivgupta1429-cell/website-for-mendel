@@ -164,12 +164,8 @@ const Index = () => {
           {/* Location */}
           <div className="space-y-4">
             <div>
-              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
-                The Menorah Lighting will take place at:
-              </p>
-              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
-                371 Town Center Dr., Wheeling, IL 60090
-              </p>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">The Menorah Lighting will take place at:</p>
+              <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">375 w Dundee Rd, Wheeling, IL 60090</p>
             </div>
             <div>
               <p className="text-lg text-gold font-light tracking-wide drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">
