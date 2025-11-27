@@ -205,7 +205,7 @@ const Index = () => {
           
           {/* Sponsor credit */}
           <p className="text-sm md:text-base font-semibold text-ivory/90 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] tracking-wide">
-            Generously sponsored by Techrupt Innovations. Need tech for your idea?{' '}
+            Made by Techrupt Innovations. Need tech for your idea?{' '}
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSf1d7_AmmXfYFQ1U47oAYKWS-AM_BIbbV-IBUpnCAKhSCo0IQ/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" className="text-gold-light hover:underline transition-all duration-200">
               Click here
             </a>.
