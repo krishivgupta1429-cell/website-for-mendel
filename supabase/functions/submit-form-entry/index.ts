@@ -19,6 +19,7 @@ interface SubmitEntryBody {
   wants_to_donate?: boolean;
   verification_token: string;
   verification_sent_at: string;
+  other_donation_amount?: number | null;
 }
 
 async function sendRegistrationEmail(fullName: string, email: string): Promise<void> {
@@ -125,6 +126,7 @@ serve(async (req) => {
       verification_token: body.verification_token,
       verification_sent_at: body.verification_sent_at,
       payment_status: body.wants_to_donate ? "pending" : "none",
+      other_donation_amount: body.other_donation_amount && body.other_donation_amount > 0 ? body.other_donation_amount : null,
     };
 
     const { data, error } = await supabaseAdmin

@@ -73,6 +73,7 @@ export type Database = {
           is_donor: boolean | null
           number_of_adults: number | null
           number_of_children: number | null
+          other_donation_amount: number | null
           payment_amount_cents: number | null
           payment_status: string | null
           phone_number: string | null
@@ -95,6 +96,7 @@ export type Database = {
           is_donor?: boolean | null
           number_of_adults?: number | null
           number_of_children?: number | null
+          other_donation_amount?: number | null
           payment_amount_cents?: number | null
           payment_status?: string | null
           phone_number?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           is_donor?: boolean | null
           number_of_adults?: number | null
           number_of_children?: number | null
+          other_donation_amount?: number | null
           payment_amount_cents?: number | null
           payment_status?: string | null
           phone_number?: string | null
