@@ -672,8 +672,8 @@ const RaffleForm = () => {
                 <Label className="text-foreground font-semibold text-base tracking-wide">
                   OTHER DONATION
                 </Label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-xl" style={{ color: '#F5F0E6' }}>
+                <div className="relative flex items-center">
+                  <span className="absolute left-4 z-10 font-semibold text-xl" style={{ color: '#E8E0D5' }}>
                     $
                   </span>
                   <Input
@@ -682,7 +682,7 @@ const RaffleForm = () => {
                     placeholder="Enter other amount"
                     value={formData.otherDonationAmount !== null ? formData.otherDonationAmount.toString() : ''}
                     onChange={(e) => handleOtherDonationChange(e.target.value)}
-                    className="pl-8 bg-input/80 backdrop-blur-sm border-border/60 text-foreground placeholder:text-foreground/50 focus:border-gold focus:ring-2 focus:ring-gold/40 transition-all duration-300 hover:border-gold/60 hover:shadow-[0_0_15px_rgba(255,215,0,0.2)] h-12 rounded-xl"
+                    className="pl-10 bg-input/80 backdrop-blur-sm border-border/60 text-foreground placeholder:text-foreground/50 focus:border-gold focus:ring-2 focus:ring-gold/40 transition-all duration-300 hover:border-gold/60 hover:shadow-[0_0_15px_rgba(255,215,0,0.2)] h-12 rounded-xl w-full"
                   />
                 </div>
               </div>
