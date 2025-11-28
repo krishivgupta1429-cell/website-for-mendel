@@ -673,7 +673,7 @@ const RaffleForm = () => {
                   OTHER DONATION
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold font-semibold text-lg">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-xl" style={{ color: '#F5F0E6' }}>
                     $
                   </span>
                   <Input
