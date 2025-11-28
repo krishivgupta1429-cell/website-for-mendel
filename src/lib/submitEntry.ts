@@ -10,6 +10,7 @@ export interface MenorahEntryData {
   numberOfChildren: string;
   indoorCelebration: string;
   sponsorships: string[];
+  otherDonationAmount?: number | null;
 }
 
 export interface MenorahEntryResponse {
@@ -71,7 +72,7 @@ export async function submitEntry(
       { id: "menorah-platinum", label: "MENORAH PLATINUM SPONSOR", amount: 540 },
     ];
 
-    const wantsToDonate = formData.sponsorships.length > 0;
+    const wantsToDonate = formData.sponsorships.length > 0 || (formData.otherDonationAmount && formData.otherDonationAmount > 0);
 
     // Generate verification token
     const verificationToken = generateVerificationToken();
@@ -97,6 +98,7 @@ export async function submitEntry(
       wants_to_donate: wantsToDonate,
       verification_token: verificationToken,
       verification_sent_at: new Date().toISOString(),
+      other_donation_amount: formData.otherDonationAmount && formData.otherDonationAmount > 0 ? formData.otherDonationAmount : null,
     };
 
     // Insert via Edge Function to bypass RLS

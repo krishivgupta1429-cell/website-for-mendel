@@ -18,7 +18,8 @@ const RaffleForm = () => {
     numberOfAdults: "",
     numberOfChildren: "",
     indoorCelebration: "",
-    sponsorships: [] as string[]
+    sponsorships: [] as string[],
+    otherDonationAmount: null as number | null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailError, setEmailError] = useState<string>("");
@@ -84,11 +85,27 @@ const RaffleForm = () => {
     amount: 540
   }];
 
-  // Calculate total sponsorship amount
+  // Calculate total sponsorship amount including other donation
   const sponsorshipTotal = formData.sponsorships.reduce((total, sponsorshipId) => {
     const option = sponsorshipOptions.find(opt => opt.id === sponsorshipId);
     return total + (option?.amount || 0);
-  }, 0);
+  }, 0) + (formData.otherDonationAmount || 0);
+
+  // Handle other donation amount change
+  const handleOtherDonationChange = (value: string) => {
+    // Remove any non-numeric characters except decimal point
+    const cleaned = value.replace(/[^\d.]/g, '');
+    // Parse as number, allow empty to set to null
+    if (cleaned === '' || cleaned === '.') {
+      setFormData({ ...formData, otherDonationAmount: null });
+    } else {
+      const numValue = parseFloat(cleaned);
+      // Only set if it's a valid positive number
+      if (!isNaN(numValue) && numValue >= 0) {
+        setFormData({ ...formData, otherDonationAmount: Math.round(numValue) });
+      }
+    }
+  };
 
   // Handle sponsorship checkbox change
   const handleSponsorshipChange = (sponsorshipId: string, checked: boolean) => {
@@ -286,9 +303,15 @@ const RaffleForm = () => {
     // Set submitting state
     setIsSubmitting(true);
     try {
-      // Check if user has sponsorships (wants to donate)
-      const hasSponsorships = formData.sponsorships.length > 0;
-      if (hasSponsorships) {
+      // Prepare sponsorships array - add OTHER_DONATION if applicable
+      const sponsorshipsToSubmit = [...formData.sponsorships];
+      if (formData.otherDonationAmount && formData.otherDonationAmount > 0) {
+        sponsorshipsToSubmit.push('OTHER_DONATION');
+      }
+
+      // Check if user has sponsorships or other donation (wants to donate)
+      const hasDonation = sponsorshipsToSubmit.length > 0;
+      if (hasDonation) {
         // STRIPE PAYMENT FLOW
         // First, save form submission to get an ID
         const response = await submitEntry({
@@ -299,7 +322,8 @@ const RaffleForm = () => {
           numberOfAdults: formData.numberOfAdults,
           numberOfChildren: formData.numberOfChildren,
           indoorCelebration: formData.indoorCelebration,
-          sponsorships: formData.sponsorships
+          sponsorships: sponsorshipsToSubmit,
+          otherDonationAmount: formData.otherDonationAmount
         });
         if (!response.success || !response.entryId) {
           toast.error("Submission failed", {
@@ -343,7 +367,8 @@ const RaffleForm = () => {
           numberOfAdults: formData.numberOfAdults,
           numberOfChildren: formData.numberOfChildren,
           indoorCelebration: formData.indoorCelebration,
-          sponsorships: formData.sponsorships
+          sponsorships: sponsorshipsToSubmit,
+          otherDonationAmount: formData.otherDonationAmount
         });
         if (response.success) {
           toast.success("Success! ✨", {
@@ -359,7 +384,8 @@ const RaffleForm = () => {
             numberOfAdults: "",
             numberOfChildren: "",
             indoorCelebration: "",
-            sponsorships: []
+            sponsorships: [],
+            otherDonationAmount: null
           });
           setEmailError("");
           setAreaCodeError("");
@@ -641,6 +667,26 @@ const RaffleForm = () => {
                 </div>
               </div>
               
+              {/* Other Donation Input */}
+              <div className="space-y-2 pt-4">
+                <Label className="text-foreground font-semibold text-base tracking-wide">
+                  OTHER DONATION
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60 font-medium text-lg">
+                    $
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Enter other amount"
+                    value={formData.otherDonationAmount !== null ? formData.otherDonationAmount.toString() : ''}
+                    onChange={(e) => handleOtherDonationChange(e.target.value)}
+                    className="pl-8 bg-input/80 backdrop-blur-sm border-border/60 text-foreground placeholder:text-foreground/50 focus:border-gold focus:ring-2 focus:ring-gold/40 transition-all duration-300 hover:border-gold/60 hover:shadow-[0_0_15px_rgba(255,215,0,0.2)] h-12 rounded-xl"
+                  />
+                </div>
+              </div>
+              
               {/* Total Charge Row */}
               <div className="flex items-center justify-between pt-4 mt-4 border-t border-gold/30">
                 <span className="text-foreground font-semibold text-base md:text-lg">Total Charge</span>
@@ -660,7 +706,7 @@ const RaffleForm = () => {
       <div className="pt-4">
         <Button type="submit" disabled={isSubmitting} className="w-full relative overflow-hidden bg-gradient-to-r from-gold via-amber to-gold text-background font-semibold text-lg py-6 rounded-xl shadow-lg hover:shadow-[0_0_40px_rgba(255,215,0,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-gold/30 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
           <span className="relative z-10">
-            {isSubmitting ? "Processing..." : formData.sponsorships.length > 0 ? "Pay Now" : "Submit Entry"}
+            {isSubmitting ? "Processing..." : (formData.sponsorships.length > 0 || (formData.otherDonationAmount && formData.otherDonationAmount > 0)) ? "Pay Now" : "Submit Entry"}
           </span>
           {/* Ripple effect on hover */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
