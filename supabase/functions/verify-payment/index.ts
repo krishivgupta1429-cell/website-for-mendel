@@ -19,7 +19,6 @@ async function sendDonorConfirmationEmail(
   email: string,
   donationData: {
     amountCents: number;
-    cansQuantity: number;
     sponsorships: string[];
     donationDate: string;
     transactionId: string;
@@ -54,11 +53,6 @@ async function sendDonorConfirmationEmail(
       bullets.push(`• Total Donation amount: ${formattedAmount} — ${sponsorshipText}`);
     } else {
       bullets.push(`• Total Donation amount: ${formattedAmount}`);
-    }
-    
-    // Cans line (only if cans > 0)
-    if (donationData.cansQuantity > 0) {
-      bullets.push(`• ${donationData.cansQuantity} cans sponsored`);
     }
     
     // Date and transaction reference
@@ -166,7 +160,7 @@ serve(async (req) => {
     // Find the form submission by checkout session ID
     const { data: submission, error: findError } = await supabaseAdmin
       .from("form_submissions")
-      .select("id, wants_to_donate, payment_status, full_name, email, cans_quantity, sponsorships, created_at")
+      .select("id, wants_to_donate, payment_status, full_name, email, sponsorships, created_at")
       .eq("stripe_checkout_session_id", session_id)
       .maybeSingle();
 
@@ -275,7 +269,6 @@ serve(async (req) => {
         submission.email,
         {
           amountCents: amountInCents,
-          cansQuantity: submission.cans_quantity || 0,
           sponsorships: submission.sponsorships || [],
           donationDate: submission.created_at,
           transactionId: paymentIntentId || session_id,
