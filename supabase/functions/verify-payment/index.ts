@@ -44,50 +44,39 @@ async function sendDonorConfirmationEmail(
       year: "numeric",
     });
 
-    // Build conditional donation details bullets
-    const bullets: string[] = [];
-    
-    // Total donation amount with optional sponsorships
+    // Build donation details line
+    let donationDetailsLine = `• ${formattedAmount}`;
     if (donationData.sponsorships && donationData.sponsorships.length > 0) {
       const sponsorshipText = donationData.sponsorships.join(", ");
-      bullets.push(`• Total Donation amount: ${formattedAmount} — ${sponsorshipText}`);
-    } else {
-      bullets.push(`• Total Donation amount: ${formattedAmount}`);
+      donationDetailsLine += ` — ${sponsorshipText}`;
     }
-    
-    // Date and transaction reference
-    bullets.push(`• ${formattedDate}`);
-    bullets.push(`• Ref: ${donationData.transactionId}`);
 
-    const htmlContent = `Dear ${fullName},<br/><br/>
-      Thank you for signing up for Menorah in the Square. We're delighted that you'll be joining us as our community gathers to celebrate the light and joy of Chanukah together.<br/><br/>
-      <strong>Event Information</strong><br/><br/>
-      📍 Rotary Square<br/>
-      203 S Union St, Traverse City, MI 49684<br/><br/>
-      🕔 Event Start: 5:00 PM<br/>
-      📅 Date: December 21st<br/><br/>
-      This annual celebration has become a cherished moment of unity in our city—filled with warmth, music, doughnuts, and the glow of the menorah. We look forward to sharing this uplifting evening with you.<br/><br/>
-      To help spread the light even further, we warmly invite you to share the sign-up link with five friends:<br/>
-      👉 <a href="https://menorah.jewishtc.org/">https://menorah.jewishtc.org/</a><br/><br/>
-      <strong>Congratulations!!</strong><br/>
-      You are among the first 100 sign-ups.<br/>
-      Please present this email upon arrival to receive your complimentary beanie before 5:05 PM.<br/><br/>
-      To see the Lamplighter Wall, visit:<br/>
-      <a href="https://www.jewishtc.org/templates/articlecco_cdo/aid/7109138/jewish/Untitled.htm">https://www.jewishtc.org/templates/articlecco_cdo/aid/7109138/jewish/Untitled.htm</a><br/>
-      If you prefer to remain anonymous on the Lamplighter Donor Wall, simply reply to this email and let us know—we're happy to list your gift anonymously.<br/><br/>
-      ⸻<br/><br/>
-      <strong>Donation Acknowledgment</strong><br/><br/>
-      We are also truly grateful for your generous support of Menorah in the Square. Your contribution helps build our Menorah of Cans and brings light and compassion to those in need throughout Traverse City.<br/><br/>
-      <strong>Donation Details</strong><br/>
-      ${bullets.join("<br/>")}<br/><br/>
-      Your partnership makes a heartfelt difference. Thank you for helping illuminate our community with kindness.<br/><br/>
-      ⸻`;
+    const htmlContent = `BH<br/><br/>
+      Dear ${fullName}<br/><br/>
+      Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.<br/><br/>
+      <strong>Public Menorah Lighting</strong><br/>
+      📍 Wheeling Town Center – 375 W. Dundee Rd.<br/>
+      🕔 Event Start: 4:00 PM<br/>
+      📅 Sunday, December 14<br/><br/>
+      <strong>Indoor Celebration</strong><br/>
+      📍 Wheeling Park District – Rooms 204–205<br/>
+      100 Community Blvd.<br/><br/>
+      <strong>Share the Light</strong><br/>
+      Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a><br/><br/>
+      <strong>Donation Acknowledgment</strong><br/>
+      Your kindness truly adds to the warmth and spirit of this celebration.<br/><br/>
+      <strong>Donation Details:</strong><br/>
+      ${donationDetailsLine}<br/>
+      • Date: ${formattedDate}<br/>
+      • Reference: ${donationData.transactionId}<br/><br/>
+      Warmly,<br/>
+      Rabbi Mendel and Mushky Shmotkin`;
 
     const payload = {
-      sender: { name: "Rabbi Laibel Shemtov", email: "rabbi@jewishtc.org" },
+      sender: { name: "Rabbi Mendel Shmotkin", email: "rabbi@wheelingchabad.com" },
       to: [{ email, name: fullName }],
-      bcc: [{ email: "laibelswb@gmail.com", name: "Rabbi Laibel" }],
-      subject: "Welcome to Menorah in the Square ✨",
+      bcc: [{ email: "wheelingchabad@gmail.com", name: "Wheeling Chabad" }],
+      subject: "Welcome to the Chanukah Celebration! ✨",
       htmlContent,
     };
 
