@@ -29,33 +29,26 @@ async function sendRegistrationEmail(fullName: string, email: string): Promise<v
       throw new Error("Missing BREVO_API_KEY");
     }
 
-    const htmlContent = `Hi ${fullName},<br/><br/>
-      Thank you so much for signing up for Menorah in the Square—we can't wait to celebrate with you!<br/><br/>
-      📍 <strong>Location:</strong> Rotary Square<br/>
-      203 S Union St, Traverse City, MI 49684<br/>
-      🕔 <strong>Event Start Time:</strong> 5:00 PM<br/>
-      📅 <strong>Date:</strong> December 21st<br/><br/>
-      Your participation helps bring warmth and light to our whole community.<br/><br/>
-      To help spread the light even further, would you consider forwarding the event sign-up to five friends?<br/><br/>
-      Here's the link: <a href="https://menorah.jewishtc.org/">https://menorah.jewishtc.org/</a><br/><br/>
-      If you have any questions at all, feel free to reach out anytime.<br/>
-      Looking forward to celebrating together!<br/><br/>
+    const htmlContent = `BH<br/><br/>
+      Dear ${fullName}<br/><br/>
+      Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.<br/><br/>
+      <strong>Public Menorah Lighting</strong><br/>
+      📍 Wheeling Town Center – 375 W. Dundee Rd.<br/>
+      🕔 Event Start: 4:00 PM<br/>
+      📅 Sunday, December 14<br/><br/>
+      <strong>Indoor Celebration</strong><br/>
+      📍 Wheeling Park District – Rooms 204–205<br/>
+      100 Community Blvd.<br/><br/>
+      <strong>Share the Light</strong><br/>
+      Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a><br/><br/>
       Warmly,<br/>
-      Rabbi Laibel & Chaya Shemtov<br/>
-      Chabad Jewish Center of Traverse City<br/>
-      <a href="https://JewishTC.org">JewishTC.org</a><br/><br/>
-      <strong>P.S.</strong> Congratulations on being among the first 100 sign-ups!<br/>
-      Please show this email when you arrive to receive your free beanie.<br/>
-      Be sure to show it before 5:05 PM—after that time, we'll begin giving them out to everyone.<br/><br/>
-      <strong>P.S.s</strong><br/>
-      View the lamplighter wall:<br/>
-      <a href="https://www.jewishtc.org/templates/articlecco_cdo/aid/7109138/jewish/Untitled.htm">https://www.jewishtc.org/templates/articlecco_cdo/aid/7109138/jewish/Untitled.htm</a>`;
+      Rabbi Mendel and Mushky Shmotkin`;
 
     const payload = {
-      sender: { name: "Rabbi Laibel Shemtov", email: "rabbi@jewishtc.org" },
+      sender: { name: "Rabbi Mendel Shmotkin", email: "rabbi@wheelingchabad.com" },
       to: [{ email, name: fullName }],
-      bcc: [{ email: "laibelswb@gmail.com", name: "Rabbi Laibel" }],
-      subject: "You're Registered for Menorah in the Square!",
+      bcc: [{ email: "wheelingchabad@gmail.com", name: "Wheeling Chabad" }],
+      subject: "Welcome to the Chanukah Celebration! ✨",
       htmlContent,
     };
 
