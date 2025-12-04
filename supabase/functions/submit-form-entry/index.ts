@@ -22,32 +22,70 @@ interface SubmitEntryBody {
   other_donation_amount?: number | null;
 }
 
-async function sendRegistrationEmail(fullName: string, email: string): Promise<void> {
+function buildAttendeeBlock(
+  numAdults: number,
+  numChildren: number,
+  indoorCelebration: string | null
+): string {
+  const lines: string[] = [];
+
+  if (numAdults > 0) {
+    lines.push(`Number of adults: ${numAdults}`);
+  }
+
+  if (numChildren > 0) {
+    lines.push(`Number of children: ${numChildren}`);
+  }
+
+  const indoorStatusLabel = indoorCelebration === "attending" ? "Attending" : "Not attending";
+  lines.push(`Indoor Chanukah Celebration: ${indoorStatusLabel}`);
+
+  return lines.join("<br/>");
+}
+
+async function sendRegistrationEmail(
+  fullName: string,
+  email: string,
+  numAdults: number,
+  numChildren: number,
+  indoorCelebration: string | null
+): Promise<void> {
   try {
     const apiKey = Deno.env.get("BREVO_API_KEY");
     if (!apiKey) {
       throw new Error("Missing BREVO_API_KEY");
     }
 
-    const htmlContent = `BH<br/><br/>
-      Dear ${fullName}<br/><br/>
-      Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.<br/><br/>
-      <strong>Public Menorah Lighting</strong><br/>
-      📍 Wheeling Town Center – 375 W. Dundee Rd.<br/>
-      🕔 Event Start: 4:00 PM<br/>
-      📅 Sunday, December 14<br/><br/>
-      <strong>Indoor Celebration</strong><br/>
-      📍 Wheeling Park District – Rooms 204–205<br/>
-      100 Community Blvd.<br/><br/>
-      <strong>Share the Light</strong><br/>
-      Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a><br/><br/>
-      Warmly,<br/>
-      Rabbi Mendel and Mushky Shmotkin`;
+    const attendeeBlock = buildAttendeeBlock(numAdults, numChildren, indoorCelebration);
+
+    const htmlContent = `<p>BH</p>
+
+<p>Dear ${fullName}</p>
+
+<p>Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.</p>
+
+<p><strong>Public Menorah Lighting</strong><br>
+📍 Wheeling Town Center – 375 W. Dundee Rd.<br>
+🕔 Event Start: 4:00 PM<br>
+📅 Sunday, December 14</p>
+
+<p><strong>Indoor Celebration</strong><br>
+📍 Wheeling Park District – Rooms 204–205<br>
+100 Community Blvd.</p>
+
+<p><strong>Share the Light</strong><br>
+Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a></p>
+
+<p>Warmly,<br>
+Rabbi Mendel and Mushky Shmotkin</p>
+
+<p><strong>Attendees:</strong><br>
+${attendeeBlock}</p>`;
 
     const payload = {
-      sender: { name: "Rabbi Mendel Shmotkin", email: "rabbi@wheelingchabad.com" },
+      sender: { name: "Wheeling Chabad", email: "rabbi@wheelingchabad.com" },
       to: [{ email, name: fullName }],
-      bcc: [{ email: "wheelingchabad@gmail.com", name: "Wheeling Chabad" }],
+      bcc: [{ email: "wheelingchabad@gmail.com" }],
       subject: "Welcome to the Chanukah Celebration! ✨",
       htmlContent,
     };
@@ -139,7 +177,13 @@ serve(async (req) => {
     // Send registration confirmation email only for NON-donors
     // Donors will receive their combined email after payment success
     if (!body.wants_to_donate) {
-      sendRegistrationEmail(body.full_name, body.email).catch(err => {
+      sendRegistrationEmail(
+        body.full_name,
+        body.email,
+        body.number_of_adults,
+        body.number_of_children ?? 0,
+        body.indoor_celebration ?? null
+      ).catch(err => {
         console.error("[submit-form-entry] Email sending failed but continuing:", err);
       });
     }
