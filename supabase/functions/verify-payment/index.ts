@@ -13,6 +13,27 @@ const logStep = (step: string, details?: any) => {
   console.log(`[VERIFY-PAYMENT-LIVE] ${step}${detailsStr}`);
 };
 
+function buildAttendeeBlock(
+  numAdults: number,
+  numChildren: number,
+  indoorCelebration: string | null
+): string {
+  const lines: string[] = [];
+
+  if (numAdults > 0) {
+    lines.push(`Number of adults: ${numAdults}`);
+  }
+
+  if (numChildren > 0) {
+    lines.push(`Number of children: ${numChildren}`);
+  }
+
+  const indoorStatusLabel = indoorCelebration === "attending" ? "Attending" : "Not attending";
+  lines.push(`Indoor Chanukah Celebration: ${indoorStatusLabel}`);
+
+  return lines.join("<br>");
+}
+
 // Send combined confirmation + donation receipt email via Brevo API
 async function sendDonorConfirmationEmail(
   fullName: string,
@@ -22,6 +43,11 @@ async function sendDonorConfirmationEmail(
     sponsorships: string[];
     donationDate: string;
     transactionId: string;
+  },
+  attendeeData: {
+    numAdults: number;
+    numChildren: number;
+    indoorCelebration: string | null;
   }
 ): Promise<void> {
   try {
@@ -36,46 +62,69 @@ async function sendDonorConfirmationEmail(
       ? `$${amountDollars}`
       : `$${amountDollars.toFixed(2)}`;
 
-    // Format donation date
+    // Format donation date in America/Chicago timezone
     const date = new Date(donationData.donationDate);
     const formattedDate = date.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
+      timeZone: "America/Chicago",
     });
+
+    // Build sponsorships string
+    const sponsorshipsText = donationData.sponsorships && donationData.sponsorships.length > 0
+      ? donationData.sponsorships.join(", ")
+      : "";
 
     // Build donation details line
     let donationDetailsLine = `• ${formattedAmount}`;
-    if (donationData.sponsorships && donationData.sponsorships.length > 0) {
-      const sponsorshipText = donationData.sponsorships.join(", ");
-      donationDetailsLine += ` — ${sponsorshipText}`;
+    if (sponsorshipsText) {
+      donationDetailsLine += ` — ${sponsorshipsText}`;
     }
 
-    const htmlContent = `BH<br/><br/>
-      Dear ${fullName}<br/><br/>
-      Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.<br/><br/>
-      <strong>Public Menorah Lighting</strong><br/>
-      📍 Wheeling Town Center – 375 W. Dundee Rd.<br/>
-      🕔 Event Start: 4:00 PM<br/>
-      📅 Sunday, December 14<br/><br/>
-      <strong>Indoor Celebration</strong><br/>
-      📍 Wheeling Park District – Rooms 204–205<br/>
-      100 Community Blvd.<br/><br/>
-      <strong>Share the Light</strong><br/>
-      Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a><br/><br/>
-      <strong>Donation Acknowledgment</strong><br/>
-      Your kindness truly adds to the warmth and spirit of this celebration.<br/><br/>
-      <strong>Donation Details:</strong><br/>
-      ${donationDetailsLine}<br/>
-      • Date: ${formattedDate}<br/>
-      • Reference: ${donationData.transactionId}<br/><br/>
-      Warmly,<br/>
-      Rabbi Mendel and Mushky Shmotkin`;
+    // Build attendee block
+    const attendeeBlock = buildAttendeeBlock(
+      attendeeData.numAdults,
+      attendeeData.numChildren,
+      attendeeData.indoorCelebration
+    );
+
+    const htmlContent = `<p>BH</p>
+
+<p>Dear ${fullName}</p>
+
+<p>Thank you for signing up for the Chanukah Celebration! We're so glad you'll be joining us as our community gathers to bring light, joy, and Jewish pride to the heart of Wheeling.</p>
+
+<p><strong>Public Menorah Lighting</strong><br>
+📍 Wheeling Town Center – 375 W. Dundee Rd.<br>
+🕔 Event Start: 4:00 PM<br>
+📅 Sunday, December 14</p>
+
+<p><strong>Indoor Celebration</strong><br>
+📍 Wheeling Park District – Rooms 204–205<br>
+100 Community Blvd.</p>
+
+<p><strong>Share the Light</strong><br>
+Invite friends to join: <a href="https://chanukah.wheelingchabad.com">https://chanukah.wheelingchabad.com</a></p>
+
+<p><strong>Donation Acknowledgment</strong><br>
+Your kindness truly adds to the warmth and spirit of this celebration.</p>
+
+<p><strong>Donation Details:</strong><br>
+${donationDetailsLine}<br>
+• Date: ${formattedDate}<br>
+• Reference: ${donationData.transactionId}</p>
+
+<p>Warmly,<br>
+Rabbi Mendel and Mushky Shmotkin</p>
+
+<p><strong>Attendees:</strong><br>
+${attendeeBlock}</p>`;
 
     const payload = {
-      sender: { name: "Rabbi Mendel Shmotkin", email: "rabbi@wheelingchabad.com" },
+      sender: { name: "Wheeling Chabad", email: "rabbi@wheelingchabad.com" },
       to: [{ email, name: fullName }],
-      bcc: [{ email: "wheelingchabad@gmail.com", name: "Wheeling Chabad" }],
+      bcc: [{ email: "wheelingchabad@gmail.com" }],
       subject: "Welcome to the Chanukah Celebration! ✨",
       htmlContent,
     };
@@ -149,7 +198,7 @@ serve(async (req) => {
     // Find the form submission by checkout session ID
     const { data: submission, error: findError } = await supabaseAdmin
       .from("form_submissions")
-      .select("id, wants_to_donate, payment_status, full_name, email, sponsorships, created_at")
+      .select("id, wants_to_donate, payment_status, full_name, email, sponsorships, created_at, number_of_adults, number_of_children, indoor_celebration")
       .eq("stripe_checkout_session_id", session_id)
       .maybeSingle();
 
@@ -261,6 +310,11 @@ serve(async (req) => {
           sponsorships: submission.sponsorships || [],
           donationDate: submission.created_at,
           transactionId: paymentIntentId || session_id,
+        },
+        {
+          numAdults: submission.number_of_adults || 0,
+          numChildren: submission.number_of_children || 0,
+          indoorCelebration: submission.indoor_celebration,
         }
       ).catch(err => {
         logStep("ERROR: Donor confirmation email failed but continuing", { error: err });
