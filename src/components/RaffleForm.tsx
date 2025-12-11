@@ -332,17 +332,15 @@ const RaffleForm = () => {
           return;
         }
 
-        // Calculate total amount
-        const totalAmount = sponsorshipTotal;
-
-        // Create Stripe checkout session
+        // Create Stripe checkout session - send sponsorships, NOT amount (server calculates amount)
         const {
           data: checkoutData,
           error: checkoutError
         } = await supabase.functions.invoke("create-checkout-session", {
           body: {
             formSubmissionId: response.entryId,
-            amount: totalAmount,
+            sponsorships: sponsorshipsToSubmit,
+            otherDonationAmount: formData.otherDonationAmount,
             email: formData.email,
             fullName: formData.fullName
           }
