@@ -99,7 +99,7 @@ const Index = () => {
         <div className="text-center mb-6 animate-fade-in">
           <div className="inline-flex items-center gap-3 px-8 py-2 rounded-full bg-gradient-to-r from-gold/10 via-amber/10 to-gold/10 border border-gold/30 backdrop-blur-sm">
             <GoldenFlameIcon className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="text-sm font-medium text-foreground/90 tracking-wider">HOSTED BY CHABAD OF WHEELING AND WHEELING TOWN CENTER</span>
+            <span className="text-sm font-medium text-foreground/90 tracking-wider">CHABAD OF WHEELING INVITES YOU TO</span>
             <GoldenFlameIcon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
         </div>
