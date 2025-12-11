@@ -1,14 +1,62 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting: simple in-memory store (resets on function cold start)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 checkout sessions per minute per IP
+
+function getRateLimitKey(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  const realIp = req.headers.get("x-real-ip");
+  const cfConnectingIp = req.headers.get("cf-connecting-ip");
+  return cfConnectingIp || realIp || forwarded?.split(",")[0]?.trim() || "unknown";
+}
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+}
+
+// Input validation schema with strict constraints
+const checkoutSessionSchema = z.object({
+  formSubmissionId: z.string()
+    .uuid("Invalid form submission ID format"),
+  amount: z.number()
+    .positive("Amount must be positive")
+    .min(1, "Minimum donation is $1")
+    .max(100000, "Maximum donation is $100,000"),
+  email: z.string()
+    .trim()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters"),
+  fullName: z.string()
+    .trim()
+    .min(1, "Name is required")
+    .max(200, "Name must be less than 200 characters"),
+});
+
 // Helper logging function
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT-LIVE] ${step}${detailsStr}`);
 };
@@ -20,6 +68,16 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting check
+    const clientIp = getRateLimitKey(req);
+    if (isRateLimited(clientIp)) {
+      logStep("Rate limited", { ip: clientIp });
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
+
     logStep("Starting checkout session creation");
 
     // Verify Stripe key is available
@@ -31,24 +89,42 @@ serve(async (req) => {
 
     logStep("Using LIVE mode Stripe key");
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    const rawBody = await req.json();
 
-    const { formSubmissionId, amount, email, fullName } = await req.json();
-
-    logStep("Request data", { formSubmissionId, amount, email, fullName });
-
-    if (!formSubmissionId || !amount || !email) {
-      logStep("ERROR: Missing required parameters");
-      throw new Error("Missing required parameters");
+    // Validate input with zod schema
+    const parseResult = checkoutSessionSchema.safeParse(rawBody);
+    
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(", ");
+      logStep("Validation error", { errors: errorMessages });
+      return new Response(
+        JSON.stringify({ error: "Validation failed", details: errorMessages }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
 
-    // Validate amount is positive
-    if (amount <= 0) {
-      logStep("ERROR: Invalid amount", { amount });
-      throw new Error("Invalid amount");
+    const { formSubmissionId, amount, email, fullName } = parseResult.data;
+
+    logStep("Request data validated", { formSubmissionId, amount, email: email.substring(0, 3) + "***" });
+
+    // Verify the form submission exists before creating Stripe session
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: submission, error: fetchError } = await supabaseAdmin
+      .from("form_submissions")
+      .select("id, email")
+      .eq("id", formSubmissionId)
+      .single();
+
+    if (fetchError || !submission) {
+      logStep("ERROR: Form submission not found", { formSubmissionId });
+      return new Response(
+        JSON.stringify({ error: "Form submission not found" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
     }
 
     // Initialize Stripe with live key
@@ -89,15 +165,8 @@ serve(async (req) => {
 
     logStep("Checkout session created", { 
       sessionId: session.id, 
-      url: session.url,
       livemode: session.livemode
     });
-
-    // Immediately update form_submissions with the checkout session ID
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     logStep("Updating form_submissions with session ID", { formSubmissionId });
 
@@ -126,8 +195,7 @@ serve(async (req) => {
     });
   } catch (error) {
     logStep("ERROR: Failed to create checkout session", { 
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined
+      error: error instanceof Error ? error.message : "Unknown error"
     });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
