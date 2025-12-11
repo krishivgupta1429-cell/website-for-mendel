@@ -37,14 +37,34 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-// Input validation schema with strict constraints
+// Server-side sponsorship pricing - NEVER trust client-supplied amounts
+const SPONSORSHIP_PRICES: Record<string, number> = {
+  "doughnut": 36,
+  "doughnut-gold": 72,
+  "doughnut-platinum": 108,
+  "menorah": 180,
+  "menorah-gold": 360,
+  "menorah-platinum": 540,
+};
+
+// Valid sponsorship IDs for validation
+const VALID_SPONSORSHIP_IDS = Object.keys(SPONSORSHIP_PRICES);
+
+// Input validation schema with strict constraints - NO client-supplied amount
 const checkoutSessionSchema = z.object({
   formSubmissionId: z.string()
     .uuid("Invalid form submission ID format"),
-  amount: z.number()
-    .positive("Amount must be positive")
-    .min(1, "Minimum donation is $1")
-    .max(100000, "Maximum donation is $100,000"),
+  sponsorships: z.array(z.string())
+    .max(10, "Too many sponsorships selected")
+    .refine(
+      (arr) => arr.every(id => VALID_SPONSORSHIP_IDS.includes(id) || id === "OTHER_DONATION"),
+      "Invalid sponsorship ID"
+    ),
+  otherDonationAmount: z.number()
+    .min(0, "Donation amount cannot be negative")
+    .max(100000, "Maximum donation is $100,000")
+    .nullable()
+    .optional(),
   email: z.string()
     .trim()
     .email("Invalid email format")
@@ -54,6 +74,16 @@ const checkoutSessionSchema = z.object({
     .min(1, "Name is required")
     .max(200, "Name must be less than 200 characters"),
 });
+
+// Calculate total amount server-side from sponsorships
+function calculateTotalAmount(sponsorships: string[], otherDonationAmount: number | null | undefined): number {
+  const sponsorshipTotal = sponsorships
+    .filter(id => id !== "OTHER_DONATION")
+    .reduce((total, id) => total + (SPONSORSHIP_PRICES[id] || 0), 0);
+  
+  const otherAmount = otherDonationAmount || 0;
+  return sponsorshipTotal + otherAmount;
+}
 
 // Helper logging function
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -103,9 +133,26 @@ serve(async (req) => {
       );
     }
 
-    const { formSubmissionId, amount, email, fullName } = parseResult.data;
+    const { formSubmissionId, sponsorships, otherDonationAmount, email, fullName } = parseResult.data;
 
-    logStep("Request data validated", { formSubmissionId, amount, email: email.substring(0, 3) + "***" });
+    // Calculate amount server-side - NEVER trust client-supplied amounts
+    const amount = calculateTotalAmount(sponsorships, otherDonationAmount);
+    
+    if (amount < 1) {
+      logStep("Invalid amount calculated", { sponsorships, otherDonationAmount, calculatedAmount: amount });
+      return new Response(
+        JSON.stringify({ error: "Total donation must be at least $1" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    logStep("Request data validated", { 
+      formSubmissionId, 
+      sponsorships,
+      otherDonationAmount,
+      calculatedAmount: amount,
+      email: email.substring(0, 3) + "***" 
+    });
 
     // Verify the form submission exists before creating Stripe session
     const supabaseAdmin = createClient(
