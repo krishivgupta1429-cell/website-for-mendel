@@ -1,26 +1,104 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface SubmitEntryBody {
-  full_name: string;
-  email: string;
-  area_code?: string | null;
-  phone_number?: string | null;
-  full_phone?: string | null;
-  number_of_adults: number;
-  number_of_children?: number;
-  indoor_celebration?: string | null;
-  sponsorships: string[];
-  wants_to_donate?: boolean;
-  verification_token: string;
-  verification_sent_at: string;
-  other_donation_amount?: number | null;
+// Rate limiting: simple in-memory store (resets on function cold start)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute per IP
+
+function getRateLimitKey(req: Request): string {
+  // Try to get client IP from various headers
+  const forwarded = req.headers.get("x-forwarded-for");
+  const realIp = req.headers.get("x-real-ip");
+  const cfConnectingIp = req.headers.get("cf-connecting-ip");
+  return cfConnectingIp || realIp || forwarded?.split(",")[0]?.trim() || "unknown";
 }
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+}
+
+// Input validation schema with strict constraints
+const submitEntrySchema = z.object({
+  full_name: z.string()
+    .trim()
+    .min(1, "Name is required")
+    .max(200, "Name must be less than 200 characters")
+    .regex(/^[a-zA-Z\s\-'.]+$/, "Name contains invalid characters"),
+  email: z.string()
+    .trim()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .toLowerCase(),
+  area_code: z.string()
+    .trim()
+    .max(5, "Area code too long")
+    .regex(/^[0-9]*$/, "Area code must be numeric")
+    .optional()
+    .nullable(),
+  phone_number: z.string()
+    .trim()
+    .max(15, "Phone number too long")
+    .regex(/^[0-9\-\s]*$/, "Phone number contains invalid characters")
+    .optional()
+    .nullable(),
+  full_phone: z.string()
+    .trim()
+    .max(20, "Phone number too long")
+    .regex(/^[0-9\-\s\(\)\+]*$/, "Phone contains invalid characters")
+    .optional()
+    .nullable(),
+  number_of_adults: z.number()
+    .int("Must be a whole number")
+    .min(0, "Cannot be negative")
+    .max(100, "Maximum 100 adults"),
+  number_of_children: z.number()
+    .int("Must be a whole number")
+    .min(0, "Cannot be negative")
+    .max(100, "Maximum 100 children")
+    .optional()
+    .default(0),
+  indoor_celebration: z.enum(["attending", "not-attending"])
+    .optional()
+    .nullable(),
+  sponsorships: z.array(
+    z.string()
+      .max(100, "Sponsorship name too long")
+      .regex(/^[a-zA-Z0-9_\-\s]+$/, "Invalid sponsorship format")
+  )
+    .max(10, "Maximum 10 sponsorships")
+    .default([]),
+  wants_to_donate: z.boolean().optional().default(false),
+  verification_token: z.string()
+    .length(64, "Invalid verification token format")
+    .regex(/^[a-f0-9]+$/, "Invalid verification token format"),
+  verification_sent_at: z.string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date format"),
+  other_donation_amount: z.number()
+    .min(0, "Amount cannot be negative")
+    .max(100000, "Maximum donation amount is $100,000")
+    .optional()
+    .nullable(),
+});
 
 function buildAttendeeBlock(
   numAdults: number,
@@ -120,21 +198,37 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting check
+    const clientIp = getRateLimitKey(req);
+    if (isRateLimited(clientIp)) {
+      console.log(`[submit-form-entry] Rate limited: ${clientIp}`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    const body = (await req.json()) as Partial<SubmitEntryBody>;
+    const rawBody = await req.json();
 
-    // Minimal validation of required fields
-    if (!body.full_name || !body.email || !body.verification_token || !body.verification_sent_at || body.number_of_adults === undefined) {
+    // Validate input with zod schema
+    const parseResult = submitEntrySchema.safeParse(rawBody);
+    
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(", ");
+      console.error("[submit-form-entry] Validation error:", errorMessages);
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Validation failed", details: errorMessages }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
+
+    const body = parseResult.data;
 
     // Compute full_phone if not provided but parts are
     let full_phone = body.full_phone ?? null;
@@ -142,18 +236,18 @@ serve(async (req) => {
       full_phone = `${body.area_code}${body.phone_number}`;
     }
 
-    // Prepare insert payload
+    // Prepare insert payload with validated and sanitized data
     const insertPayload = {
-      full_name: body.full_name.trim(),
-      email: body.email.trim().toLowerCase(),
-      area_code: body.area_code?.trim() ?? null,
-      phone_number: body.phone_number?.trim() ?? null,
+      full_name: body.full_name,
+      email: body.email,
+      area_code: body.area_code ?? null,
+      phone_number: body.phone_number ?? null,
       full_phone,
       number_of_adults: body.number_of_adults,
-      number_of_children: body.number_of_children ?? 0,
+      number_of_children: body.number_of_children,
       indoor_celebration: body.indoor_celebration ?? null,
-      sponsorships: body.sponsorships ?? [],
-      wants_to_donate: body.wants_to_donate ?? false,
+      sponsorships: body.sponsorships,
+      wants_to_donate: body.wants_to_donate,
       verification_token: body.verification_token,
       verification_sent_at: body.verification_sent_at,
       payment_status: body.wants_to_donate ? "pending" : "none",
@@ -181,7 +275,7 @@ serve(async (req) => {
         body.full_name,
         body.email,
         body.number_of_adults,
-        body.number_of_children ?? 0,
+        body.number_of_children,
         body.indoor_celebration ?? null
       ).catch(err => {
         console.error("[submit-form-entry] Email sending failed but continuing:", err);
