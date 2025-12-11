@@ -128,6 +128,16 @@ const Index = () => {
 
           {/* Subtitle */}
           <p className={`text-xl md:text-2xl text-gold-gradient font-light tracking-wide bg-[length:200%_auto] ${!isMobile && !prefersReducedMotion ? 'animate-shimmer' : ''}`}>Public Menorah Lighting At Wheeling Town Center.</p>
+
+          {/* Weather Update Banner */}
+          <div className="mt-6 mx-auto max-w-xl">
+            <div className="px-5 py-4 rounded-2xl bg-background/40 backdrop-blur-sm border border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.15)]">
+              <p className="text-sm md:text-base text-ivory/90 leading-relaxed text-center">
+                <span className="font-bold text-gold">⚠️ Weather Update:</span>{' '}
+                If cold, snow, or wind prevent an outdoor lighting, we will seamlessly move the menorah lighting indoors. All RSVPs will receive a quick update if anything changes.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Form Card with Glassmorphism */}
