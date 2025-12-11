@@ -3,6 +3,8 @@ import FloatingParticles from "@/components/FloatingParticles";
 import RaffleForm from "@/components/RaffleForm";
 import MenorahCandles from "@/components/MenorahCandles";
 import { usePerformanceLogger } from "@/hooks/use-performance-logger";
+import wheelingTownCenterLogo from "@/assets/wheeling-town-center-logo.jpeg";
+import walmartLogo from "@/assets/walmart-logo.png";
 const GoldenFlameIcon = ({
   className = ""
 }: {
@@ -203,6 +205,39 @@ const Index = () => {
           {/* Chanukah Logo */}
           <div className="mt-8 flex justify-center">
             <img src="/chanukah-logo-mendel.jpeg" alt="Chanukah Logo" className="w-32 h-auto md:w-40 rounded-lg opacity-90" />
+          </div>
+
+          {/* Sponsors Strip */}
+          <div className="mt-12 pt-8 border-t border-gold/20">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12">
+              {/* Platinum Sponsor - Wheeling Town Center */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-lg flex items-center justify-center p-3 shadow-lg">
+                  <img 
+                    src={wheelingTownCenterLogo} 
+                    alt="Wheeling Town Center" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold tracking-widest text-ivory/80 uppercase">
+                  Platinum Sponsor
+                </span>
+              </div>
+
+              {/* Gold Sponsor - Walmart */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-lg flex items-center justify-center p-4 shadow-lg">
+                  <img 
+                    src={walmartLogo} 
+                    alt="Walmart" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold tracking-widest text-ivory/80 uppercase">
+                  Gold Sponsor
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
