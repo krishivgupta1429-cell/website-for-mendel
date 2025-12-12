@@ -80,34 +80,48 @@ export async function submitEntry(
     // Generate full phone in E.164 format if both parts are provided
     // Strip formatting from phone number (in case of US format)
     const cleanedPhoneNumber = formData.phoneNumber ? formData.phoneNumber.replace(/\D/g, '') : '';
-    const fullPhone = formData.areaCode && cleanedPhoneNumber 
-      ? `${formData.areaCode.trim()}${cleanedPhoneNumber}`
+    
+    // Clean area code - strip + and any non-numeric characters
+    const cleanedAreaCode = formData.areaCode ? formData.areaCode.replace(/\D/g, '') : '';
+    
+    const fullPhone = cleanedAreaCode && cleanedPhoneNumber 
+      ? `+${cleanedAreaCode}${cleanedPhoneNumber}`
       : null;
 
     // Prepare the database entry
     const entry = {
       full_name: formData.fullName.trim(),
       email: formData.email.trim().toLowerCase(),
-      area_code: formData.areaCode.trim() || null,
-      phone_number: formData.phoneNumber ? formData.phoneNumber.replace(/\D/g, '').trim() : null,
+      area_code: cleanedAreaCode || null,
+      phone_number: cleanedPhoneNumber || null,
       full_phone: fullPhone,
-      number_of_adults: parseInt(formData.numberOfAdults, 10),
+      number_of_adults: parseInt(formData.numberOfAdults, 10) || 0,
       number_of_children: formData.numberOfChildren ? parseInt(formData.numberOfChildren, 10) : 0,
       indoor_celebration: formData.indoorCelebration || null,
-      sponsorships: formData.sponsorships,
-      wants_to_donate: wantsToDonate,
+      sponsorships: formData.sponsorships || [],
+      wants_to_donate: wantsToDonate === true,
       verification_token: verificationToken,
       verification_sent_at: new Date().toISOString(),
       other_donation_amount: formData.otherDonationAmount && formData.otherDonationAmount > 0 ? formData.otherDonationAmount : null,
     };
+
+    console.log("[submitEntry] Sending payload to edge function:", JSON.stringify(entry, null, 2));
 
     // Insert via Edge Function to bypass RLS
     const { data: insertData, error: insertError } = await supabase.functions.invoke('submit-form-entry', {
       body: entry,
     });
 
-    if (insertError || !insertData?.id) {
-      console.error("Error inserting form submission via function:", insertError);
+    if (insertError) {
+      console.error("[submitEntry] Edge function error:", insertError);
+      return {
+        success: false,
+        error: "Failed to submit your entry. Please try again.",
+      };
+    }
+    
+    if (!insertData?.id) {
+      console.error("[submitEntry] No entry ID returned from edge function:", insertData);
       return {
         success: false,
         error: "Failed to submit your entry. Please try again.",
