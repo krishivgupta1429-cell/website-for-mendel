@@ -37,7 +37,7 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-// Input validation schema with strict constraints
+// Input validation schema with permissive constraints for optional fields
 const submitEntrySchema = z.object({
   full_name: z.string()
     .trim()
@@ -49,45 +49,50 @@ const submitEntrySchema = z.object({
     .email("Invalid email format")
     .max(254, "Email must be less than 254 characters")
     .toLowerCase(),
+  // area_code can be empty string, null, or digits only
   area_code: z.string()
     .trim()
     .max(5, "Area code too long")
-    .regex(/^[0-9]*$/, "Area code must be numeric")
+    .refine((val) => val === "" || /^[0-9]+$/.test(val), "Area code must be numeric")
     .optional()
-    .nullable(),
+    .nullable()
+    .transform(val => val === "" ? null : val),
   phone_number: z.string()
     .trim()
     .max(15, "Phone number too long")
     .regex(/^[0-9\-\s]*$/, "Phone number contains invalid characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .transform(val => val === "" ? null : val),
   full_phone: z.string()
     .trim()
     .max(20, "Phone number too long")
     .regex(/^[0-9\-\s\(\)\+]*$/, "Phone contains invalid characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .transform(val => val === "" ? null : val),
   number_of_adults: z.number()
     .int("Must be a whole number")
     .min(0, "Cannot be negative")
     .max(100, "Maximum 100 adults"),
-  number_of_children: z.number()
-    .int("Must be a whole number")
-    .min(0, "Cannot be negative")
-    .max(100, "Maximum 100 children")
+  number_of_children: z.union([z.number().int().min(0).max(100), z.null()])
     .optional()
-    .default(0),
+    .transform(val => val ?? 0),
   indoor_celebration: z.enum(["attending", "not-attending"])
     .optional()
     .nullable(),
   sponsorships: z.array(
     z.string()
       .max(100, "Sponsorship name too long")
-      .regex(/^[a-zA-Z0-9_\-\s]+$/, "Invalid sponsorship format")
   )
     .max(10, "Maximum 10 sponsorships")
+    .optional()
+    .nullable()
     .default([]),
-  wants_to_donate: z.boolean().optional().default(false),
+  // wants_to_donate can be boolean, null, or undefined - all coerce to boolean
+  wants_to_donate: z.union([z.boolean(), z.null()])
+    .optional()
+    .transform(val => val === true),
   verification_token: z.string()
     .length(64, "Invalid verification token format")
     .regex(/^[a-f0-9]+$/, "Invalid verification token format"),
@@ -215,6 +220,7 @@ serve(async (req) => {
     );
 
     const rawBody = await req.json();
+    console.log("[submit-form-entry] Received payload:", JSON.stringify(rawBody));
 
     // Validate input with zod schema
     const parseResult = submitEntrySchema.safeParse(rawBody);
@@ -222,6 +228,7 @@ serve(async (req) => {
     if (!parseResult.success) {
       const errorMessages = parseResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(", ");
       console.error("[submit-form-entry] Validation error:", errorMessages);
+      console.error("[submit-form-entry] Raw body causing error:", JSON.stringify(rawBody));
       return new Response(
         JSON.stringify({ error: "Validation failed", details: errorMessages }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -253,6 +260,8 @@ serve(async (req) => {
       payment_status: body.wants_to_donate ? "pending" : "none",
       other_donation_amount: body.other_donation_amount && body.other_donation_amount > 0 ? body.other_donation_amount : null,
     };
+
+    console.log("[submit-form-entry] Insert payload:", JSON.stringify(insertPayload));
 
     const { data, error } = await supabaseAdmin
       .from("form_submissions")
