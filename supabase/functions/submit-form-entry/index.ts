@@ -132,11 +132,14 @@ async function sendRegistrationEmail(
   numAdults: number,
   numChildren: number,
   indoorCelebration: string | null
-): Promise<void> {
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     const apiKey = Deno.env.get("BREVO_API_KEY");
+    console.log("[email] BREVO_KEY_PRESENT:", Boolean(apiKey));
+    
     if (!apiKey) {
-      throw new Error("Missing BREVO_API_KEY");
+      console.error("[email] BREVO_API_KEY is missing!");
+      return { success: false, error: "Missing BREVO_API_KEY" };
     }
 
     const attendeeBlock = buildAttendeeBlock(numAdults, numChildren, indoorCelebration);
@@ -173,7 +176,7 @@ ${attendeeBlock}</p>`;
       htmlContent,
     };
 
-    console.log(`[email] Attempting to send registration email to ${email}...`);
+    console.log(`[email] BREVO_SEND_START - to: ${email}, from: rabbi@wheelingchabad.com`);
 
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -184,15 +187,28 @@ ${attendeeBlock}</p>`;
       body: JSON.stringify(payload),
     });
 
+    const responseText = await response.text();
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+      console.error(`[email] BREVO_SEND_ERROR - status: ${response.status}, response: ${responseText}`);
+      return { success: false, error: `Brevo API error: ${response.status} - ${responseText}` };
     }
     
-    console.log(`[email] Sent successfully to ${email}`);
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      responseData = { raw: responseText };
+    }
+    
+    const messageId = responseData.messageId || "unknown";
+    console.log(`[email] BREVO_SEND_SUCCESS - messageId: ${messageId}, to: ${email}`);
+    
+    return { success: true, messageId };
   } catch (error) {
-    console.error(`[email] Error: ${error}`);
-    // Don't throw - we don't want email failures to block form submission
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[email] BREVO_SEND_ERROR - exception: ${errorMessage}`);
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -279,16 +295,25 @@ serve(async (req) => {
 
     // Send registration confirmation email only for NON-donors
     // Donors will receive their combined email after payment success
+    console.log("[submit-form-entry] FORM_SUBMISSION_SAVED - id:", data.id, "wants_to_donate:", body.wants_to_donate);
+    
     if (!body.wants_to_donate) {
-      sendRegistrationEmail(
+      console.log("[submit-form-entry] Triggering registration email for non-donor...");
+      const emailResult = await sendRegistrationEmail(
         body.full_name,
         body.email,
         body.number_of_adults,
         body.number_of_children,
         body.indoor_celebration ?? null
-      ).catch(err => {
-        console.error("[submit-form-entry] Email sending failed but continuing:", err);
-      });
+      );
+      
+      if (!emailResult.success) {
+        console.error("[submit-form-entry] Email failed but submission saved:", emailResult.error);
+      } else {
+        console.log("[submit-form-entry] Email sent successfully, messageId:", emailResult.messageId);
+      }
+    } else {
+      console.log("[submit-form-entry] Skipping registration email - donor will receive email after payment");
     }
 
     return new Response(JSON.stringify({ id: data.id }), {
